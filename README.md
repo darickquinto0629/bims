@@ -412,7 +412,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 
 For support, issues, or questions:
 - Create an issue on GitHub
-- Contact: your-email@example.com
+- Contact: darickquinto@gmail.com
 
 ---
 
