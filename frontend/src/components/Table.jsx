@@ -25,7 +25,7 @@ export default function Table({ columns, data }) {
               <tr key={row.id} className="hover:bg-blue-50 transition-colors duration-150">
                 {columns.map((c) => (
                   <td key={c.key} className="px-6 py-4 text-sm text-gray-700">
-                    {c.render ? c.render(row) : row[c.key]}
+                    {c.render ? c.render(row, row[c.key]) : row[c.key]}
                   </td>
                 ))}
               </tr>

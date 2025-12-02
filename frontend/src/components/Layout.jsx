@@ -1,19 +1,39 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = React.useState(null);
+  
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
   
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
-  
+
   const navItems = [
     { path: '/', label: 'Dashboard', icon: '📊' },
     { path: '/residents', label: 'Residents', icon: '👥' },
+    { path: '/households', label: 'Households', icon: '🏠' },
     { path: '/certificates', label: 'Certificates', icon: '📄' },
     { path: '/blotter', label: 'Blotter', icon: '📋' },
     { path: '/officials', label: 'Officials', icon: '👔' },
-    { path: '/reports', label: 'Reports', icon: '📈' },
-    { path: '/admin', label: 'Admin', icon: '⚙️' }
+    { path: '/reports', label: 'Reports', icon: '📈' }
   ];
+
+  // Only show admin menu when user is admin
+  if (user && user.role === 'admin') {
+    navItems.push({ path: '/admin', label: 'Admin', icon: '⚙️' });
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
   
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -38,9 +58,20 @@ export default function Layout() {
             </Link>
           ))}
         </nav>
+        
+        {/* Logout Button */}
+        <div className="absolute bottom-0 w-64 p-4 border-t border-blue-500">
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-semibold flex items-center justify-center gap-2"
+          >
+            <span>🚪</span>
+            Logout
+          </button>
+        </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-20">
         <div className="p-8">
           <Outlet />
         </div>
@@ -48,3 +79,4 @@ export default function Layout() {
     </div>
   );
 }
+

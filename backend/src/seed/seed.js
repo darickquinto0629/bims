@@ -20,6 +20,11 @@ async function seed() {
   await User.create({ username: 'admin', password_hash: pass, role: 'admin', full_name: 'Administrator' });
 
   console.log('Seeding complete');
+
+    // Create staff user
+    const staffPass = await bcrypt.hash('staff123', 10);
+    await User.create({ username: 'staff', password_hash: staffPass, role: 'staff', full_name: 'Staff Member' });
+
   process.exit(0);
 }
 
