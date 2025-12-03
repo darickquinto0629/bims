@@ -8,9 +8,14 @@ export default function HouseholdList() {
   const [households, setHouseholds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userRole, setUserRole] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Get user role from localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setUserRole(user.role || '');
+    
     fetchHouseholds();
   }, []);
 
@@ -53,16 +58,18 @@ export default function HouseholdList() {
         <div className='flex gap-2'>
           <button
             onClick={() => navigate(`/households/${household.id}`)}
-            className='px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm'
+            className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold'
           >
             Edit
           </button>
-          <button
-            onClick={() => deleteHousehold(household.id)}
-            className='px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition text-sm'
-          >
-            Delete
-          </button>
+          {userRole === 'admin' && (
+            <button
+              onClick={() => deleteHousehold(household.id)}
+              className='px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-semibold'
+            >
+              Delete
+            </button>
+          )}
         </div>
       ),
     },

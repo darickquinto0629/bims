@@ -8,13 +8,21 @@ export default function BlotterList(){
   const [rows, setRows] = useState([]);
   const [selectedBlotter, setSelectedBlotter] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [userRole, setUserRole] = useState('');
 
-  useEffect(()=>{ (async ()=> {
-    try {
-      const r = await api.get('/blotter');
-      setRows(r.data || []);
-    } catch (err) { console.error(err) }
-  })(); }, []);
+  useEffect(()=>{ 
+    // Get user role from localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setUserRole(user.role || '');
+
+    // Fetch blotters
+    (async ()=> {
+      try {
+        const r = await api.get('/blotter');
+        setRows(r.data || []);
+      } catch (err) { console.error(err) }
+    })(); 
+  }, []);
 
   const truncateDescription = (text) => {
     if (!text) return '';
@@ -33,9 +41,22 @@ export default function BlotterList(){
     setSelectedBlotter(null);
   };
 
+  async function handleDelete(id) {
+    if (!window.confirm('Are you sure you want to delete this blotter incident?')) return;
+    
+    try {
+      await api.delete(`/blotter/${id}`);
+      setRows(rows.filter(row => row.id !== id));
+      alert('Blotter deleted successfully');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete blotter');
+    }
+  }
+
   return (
     <div>
-      <PageHeader title="Blotter / Incidents" actions={<Link to="/blotter/new" className="px-3 py-2 bg-blue-600 text-white rounded">New Incident</Link>} />
+      <PageHeader title="Blotter / Incidents" actions={<Link to="/blotter/new" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors">New Incident</Link>} />
       <Table columns={[
         { key: 'incident_date', title: 'Date', render: r=> r.incident_date },
         { 
@@ -51,12 +72,22 @@ export default function BlotterList(){
           key: 'actions', 
           title: 'Actions', 
           render: r => (
-            <button
-              onClick={() => handleViewDetails(r)}
-              className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
-            >
-              Read More
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleViewDetails(r)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Read More
+              </button>
+              {userRole === 'admin' && (
+                <button 
+                  onClick={() => handleDelete(r.id)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           )
         }
       ]} data={rows} />

@@ -57,6 +57,7 @@ export default function App(){
 
         <Route path="/officials" element={<OfficialList />} />
         <Route path="/officials/new" element={<OfficialForm />} />
+        <Route path="/officials/:id/edit" element={<OfficialForm />} />
 
         <Route path="/reports" element={<Reports />} />
 

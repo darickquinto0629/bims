@@ -41,6 +41,14 @@ export default function Layout() {
         <div className="p-6 border-b border-blue-500">
           <h1 className="text-2xl font-bold">BIMS</h1>
           <p className="text-blue-100 text-xs mt-1">Barangay Information Management System</p>
+          {user && (
+            <div className="mt-4 pt-4 border-t border-blue-500">
+              <p className="text-blue-100 text-xs">Logged in as</p>
+              <p className="text-white text-sm font-semibold">
+                {user.full_name || user.username} <span className="text-blue-200 font-normal lowercase">({user.role})</span>
+              </p>
+            </div>
+          )}
         </div>
         <nav className="p-4 space-y-1">
           {navItems.map(item => (

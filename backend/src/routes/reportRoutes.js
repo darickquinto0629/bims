@@ -7,5 +7,6 @@ router.use(verifyToken);
 
 router.get('/summary', ctrl.summary);
 router.get('/resident-demographics', ctrl.residentDemographics);
+router.get('/monthly-incidents', ctrl.monthlyIncidents);
 
 module.exports = router;

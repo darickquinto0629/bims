@@ -16,3 +16,16 @@ exports.createCertificate = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.deleteCertificate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cert = await Certificate.findByPk(id);
+    if (!cert) return res.status(404).json({ message: 'Certificate not found' });
+    await cert.destroy();
+    res.json({ message: 'Certificate deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

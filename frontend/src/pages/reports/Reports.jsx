@@ -29,13 +29,18 @@ ChartJS.register(
 
 export default function Reports() {
   const [demo, setDemo] = useState([]);
+  const [monthlyIncidents, setMonthlyIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const r = await api.get('/reports/resident-demographics');
-        setDemo(r.data.gender || []);
+        const [demoRes, incidentsRes] = await Promise.all([
+          api.get('/reports/resident-demographics'),
+          api.get('/reports/monthly-incidents')
+        ]);
+        setDemo(demoRes.data.gender || []);
+        setMonthlyIncidents(incidentsRes.data || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -85,6 +90,52 @@ export default function Reports() {
     },
   };
 
+  // Chart data for monthly incidents
+  const monthlyIncidentsData = {
+    labels: monthlyIncidents.map(d => {
+      const [year, month] = d.month.split('-');
+      return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }),
+    datasets: [
+      {
+        label: 'Number of Incidents',
+        data: monthlyIncidents.map(d => d.count),
+        backgroundColor: 'rgba(239, 68, 68, 0.5)',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const monthlyIncidentsOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          font: { size: 12 },
+        },
+      },
+      title: {
+        display: true,
+        text: 'Monthly Incident Reports',
+        font: { size: 16, weight: 'bold' },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
+
   return (
     <div>
       <PageHeader title="Reports & Analytics" />
@@ -97,53 +148,6 @@ export default function Reports() {
               <p className="text-gray-500 text-center pt-20">Loading data...</p>
             ) : demo.length > 0 ? (
               <Pie data={genderChartData} options={{ ...genderChartOptions, maintainAspectRatio: false }} />
-            ) : (
-              <p className="text-gray-500 text-center pt-20">No data available</p>
-            )}
-          </div>
-        </div>
-
-        {/* Gender Demographics - Bar Chart */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div style={{ height: '250px', position: 'relative' }}>
-            {loading ? (
-              <p className="text-gray-500 text-center pt-20">Loading data...</p>
-            ) : demo.length > 0 ? (
-              <Bar
-                data={genderChartData}
-                options={{
-                  ...genderChartOptions,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    ...genderChartOptions.plugins,
-                    title: {
-                      ...genderChartOptions.plugins.title,
-                      text: 'Residents by Gender (Bar Chart)',
-                    },
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      ticks: {
-                        stepSize: 1,
-                      },
-                    },
-                  },
-                }}
-              />
-            ) : (
-              <p className="text-gray-500 text-center pt-20">No data available</p>
-            )}
-          </div>
-        </div>
-
-        {/* Gender Demographics - Doughnut Chart */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div style={{ height: '250px', position: 'relative' }}>
-            {loading ? (
-              <p className="text-gray-500 text-center pt-20">Loading data...</p>
-            ) : demo.length > 0 ? (
-              <Doughnut data={genderChartData} options={{ ...genderChartOptions, maintainAspectRatio: false }} />
             ) : (
               <p className="text-gray-500 text-center pt-20">No data available</p>
             )}
@@ -173,6 +177,19 @@ export default function Reports() {
               </>
             ) : (
               <p className="text-gray-500">No data available</p>
+            )}
+          </div>
+        </div>
+
+        {/* Monthly Incidents - Line Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-md lg:col-span-2">
+          <div style={{ height: '300px', position: 'relative' }}>
+            {loading ? (
+              <p className="text-gray-500 text-center pt-20">Loading data...</p>
+            ) : monthlyIncidents.length > 0 ? (
+              <Line data={monthlyIncidentsData} options={monthlyIncidentsOptions} />
+            ) : (
+              <p className="text-gray-500 text-center pt-20">No incident data available</p>
             )}
           </div>
         </div>
