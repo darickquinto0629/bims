@@ -1,5 +1,5 @@
 # BIMS - Barangay Information Management System
-
+MIT421 Final Project
 A comprehensive full-stack web application for managing barangay (village) administrative data including residents, certificates, incidents, and officials.
 
 ## 📋 Table of Contents
