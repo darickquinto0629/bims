@@ -34,7 +34,7 @@ export default function Dashboard(){
             onClick={() => {
               if (idx === 0) navigate('/residents');
               else if (idx === 1) navigate('/certificates');
-              else if (idx === 2) navigate('/reports');
+              else if (idx === 2) navigate('/blotter');
             }}
             className={`bg-gradient-to-br ${card.color} text-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-200 ${(idx === 0 || idx === 1 || idx === 2) ? 'cursor-pointer' : ''}`}
           >

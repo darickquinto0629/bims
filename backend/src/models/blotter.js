@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     incident_date: DataTypes.DATEONLY,
     description: DataTypes.TEXT,
     reported_by: DataTypes.STRING,
+    accommodated_by: DataTypes.STRING,
     status: { type: DataTypes.ENUM('Open','Closed','Pending'), defaultValue: 'Open' }
   }, {
     tableName: 'blotter',

@@ -5,12 +5,17 @@ import { useNavigate } from 'react-router-dom';
 
 export default function BlotterForm(){
   const navigate = useNavigate();
-  const [form, setForm] = useState({ date: '', description: '', reported_by: '' });
+  const [form, setForm] = useState({ date: '', description: '', reported_by: '', accommodated_by: '' });
 
   async function submit(e){
     e.preventDefault();
     try {
-      await api.post('/blotter', { incident_date: form.date, description: form.description, reported_by: form.reported_by });
+      await api.post('/blotter', { 
+        incident_date: form.date, 
+        description: form.description, 
+        reported_by: form.reported_by,
+        accommodated_by: form.accommodated_by
+      });
       alert('Incident recorded');
       navigate('/blotter');
     } catch (err) { console.error(err); alert('Failed'); }
@@ -27,6 +32,10 @@ export default function BlotterForm(){
         <div>
           <label className="block text-sm">Reported by</label>
           <input className="p-2 border rounded w-full" value={form.reported_by} onChange={e=>setForm({...form, reported_by:e.target.value})} />
+        </div>
+        <div>
+          <label className="block text-sm">Accommodated by (Official/Staff)</label>
+          <input className="p-2 border rounded w-full" value={form.accommodated_by} onChange={e=>setForm({...form, accommodated_by:e.target.value})} placeholder="Enter official or staff name" />
         </div>
         <div>
           <label className="block text-sm">Description</label>
