@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     last_name: { type: DataTypes.STRING, allowNull: false },
     suffix: DataTypes.STRING,
     birth_date: DataTypes.DATEONLY,
+    address: DataTypes.STRING,
     gender: { type: DataTypes.ENUM('Male', 'Female', 'Other'), defaultValue: 'Male' },
     civil_status: { type: DataTypes.ENUM('Single','Married','Widowed','Separated','Divorced','Other'), defaultValue: 'Single' },
     occupation: DataTypes.STRING,

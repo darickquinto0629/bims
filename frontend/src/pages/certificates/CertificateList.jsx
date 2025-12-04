@@ -10,18 +10,22 @@ export default function CertificateList(){
   const [showModal, setShowModal] = useState(false);
   const [userRole, setUserRole] = useState('');
 
+  async function loadCertificates() {
+    try {
+      const r = await api.get('/certificates');
+      setRows(r.data || []);
+    } catch (err) { 
+      console.error(err);
+    }
+  }
+
   useEffect(()=>{ 
     // Get user role from localStorage
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setUserRole(user.role || '');
 
     // Fetch certificates
-    (async ()=> {
-      try {
-        const r = await api.get('/certificates');
-        setRows(r.data || []);
-      } catch (err) { console.error(err) }
-    })(); 
+    loadCertificates();
   }, []);
 
   function handleViewDetails(certificate) {
@@ -47,7 +51,7 @@ export default function CertificateList(){
       <PageHeader title="Certificates" actions={<Link className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors" to="/certificates/new">New Certificate</Link>} />
       <Table columns={[
         { key: 'type', title: 'Type', render: r=>r.type },
-        { key: 'resident', title: 'Resident', render: r=> r.Resident ? `${r.Resident.last_name}, ${r.Resident.first_name}` : 'N/A' },
+        { key: 'resident', title: 'Resident', render: r=> r.Resident ? `${r.Resident.first_name} ${r.Resident.last_name}` : 'N/A' },
         { key: 'purpose', title: 'Purpose', render: r=> r.purpose || 'N/A' },
         { key: 'issued_by', title: 'Issued By', render: r=> r.issued_by || 'N/A' },
         { key: 'issued_at', title: 'Issued At', render: r=> new Date(r.issued_at).toLocaleString() },

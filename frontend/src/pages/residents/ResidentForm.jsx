@@ -10,7 +10,7 @@ export default function ResidentForm(){
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    household_id: '', first_name: '', middle_name: '', last_name: '', birth_date: '', gender: 'Male', civil_status: 'Single', occupation: '', contact_number: '', email: ''
+    household_id: '', address: '', first_name: '', middle_name: '', last_name: '', birth_date: '', gender: 'Male', civil_status: 'Single', occupation: '', contact_number: '', email: ''
   });
 
   useEffect(()=>{
@@ -46,6 +46,12 @@ export default function ResidentForm(){
       return;
     }
 
+    if (!form.address) {
+      setError('Address is required');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (id) await api.put(`/residents/${id}`, form);
       else await api.post('/residents', form);
@@ -71,8 +77,13 @@ export default function ResidentForm(){
           <label className='block text-sm font-semibold text-gray-700 mb-2'>Household</label>
           <select value={form.household_id || ''} onChange={e=>setForm({...form, household_id: e.target.value||null})} className='px-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'>
             <option value=''>-- Select Household --</option>
-            {households.map(h=> <option key={h.id} value={h.id}>{h.household_code} - {h.address_line}</option>)}
+            {households.map(h=> <option key={h.id} value={h.id}>{h.household_code}</option>)}
           </select>
+        </div>
+
+        <div>
+          <label className='block text-sm font-semibold text-gray-700 mb-2'>Address *</label>
+          <input required className='px-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition' value={form.address || ''} onChange={e=>setForm({...form, address: e.target.value})} placeholder='Enter complete address' />
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>

@@ -9,8 +9,7 @@ export default function HouseholdForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    household_code: '',
-    address_line: ''
+    household_code: ''
   });
 
   useEffect(() => {
@@ -21,7 +20,7 @@ export default function HouseholdForm() {
           console.log('Fetching household with id:', id);
           const response = await api.get(`/households/${id}`);
           console.log('Household fetched:', response.data);
-          setForm(response.data);
+          setForm({ household_code: response.data.household_code });
         } catch (err) {
           console.error('Error fetching household:', err);
           setError(err.response?.data?.message || 'Failed to load household');
@@ -35,8 +34,8 @@ export default function HouseholdForm() {
     setError('');
     setLoading(true);
 
-    if (!form.household_code || !form.address_line) {
-      setError('Household code and address are required');
+    if (!form.household_code) {
+      setError('Household code is required');
       setLoading(false);
       return;
     }
@@ -73,17 +72,6 @@ export default function HouseholdForm() {
             value={form.household_code}
             onChange={e => setForm({ ...form, household_code: e.target.value })}
             placeholder='e.g., HH001'
-          />
-        </div>
-
-        <div>
-          <label className='block text-sm font-semibold text-gray-700 mb-2'>Address Line *</label>
-          <input
-            required
-            className='px-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition'
-            value={form.address_line}
-            onChange={e => setForm({ ...form, address_line: e.target.value })}
-            placeholder='e.g., 123 Main Street'
           />
         </div>
 

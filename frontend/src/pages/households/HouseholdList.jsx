@@ -49,11 +49,10 @@ export default function HouseholdList() {
   }
 
   const columns = [
-    { key: 'household_code', label: 'Household Code' },
-    { key: 'address_line', label: 'Address' },
+    { key: 'household_code', title: 'Household Code' },
     {
       key: 'actions',
-      label: 'Actions',
+      title: 'Actions',
       render: (household) => (
         <div className='flex gap-2'>
           <button

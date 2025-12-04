@@ -188,9 +188,9 @@ export default function ResidentList(){
       </div>
       <Table
         columns={[
-          { key: 'name', title: 'Name', render: r => `${r.last_name}, ${r.first_name}` },
+          { key: 'name', title: 'Name', render: r => `${r.first_name} ${r.last_name}` },
           { key: 'household', title: 'Household', render: r => r.Household?.household_code ?? '' },
-          { key: 'address', title: 'Address', render: r => r.Household?.address_line || 'N/A' },
+          { key: 'address', title: 'Address', render: r => r.address || 'N/A' },
           { key: 'occupation', title: 'Occupation', render: r => r.occupation || 'N/A' },
           { 
             key: 'actions', 

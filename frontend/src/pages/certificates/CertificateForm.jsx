@@ -11,14 +11,18 @@ export default function CertificateForm(){
   const [searchError, setSearchError] = useState('');
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [type, setType] = useState('Barangay Clearance');
+  const [households, setHouseholds] = useState([]);
   const navigate = useNavigate();
   
   // Form data for the certificate
   const [form, setForm] = useState({
     resident_id: null,
-    full_name: '',
+    first_name: '',
+    last_name: '',
     birth_date: '',
     address: '',
+    household: '',
+    occupation: '',
     purpose: '',
     issued_by: ''
   });
@@ -32,12 +36,26 @@ export default function CertificateForm(){
         const captain = officials.find(official => official.position === 'Barangay Captain');
         if (captain) {
           setForm(prev => ({ ...prev, issued_by: captain.name }));
+        } else {
+          setForm(prev => ({ ...prev, issued_by: 'Barangay Official' }));
         }
       } catch (err) {
         console.error('Error fetching Barangay Captain:', err);
+        setForm(prev => ({ ...prev, issued_by: 'Barangay Official' }));
       }
     }
+    
+    async function fetchHouseholds() {
+      try {
+        const response = await api.get('/households');
+        setHouseholds(response.data || []);
+      } catch (err) {
+        console.error('Error fetching households:', err);
+      }
+    }
+    
     fetchBarangayCaptain();
+    fetchHouseholds();
   }, []);
 
   // Auto-search as user types
@@ -87,9 +105,12 @@ export default function CertificateForm(){
     setForm({
       ...form,
       resident_id: resident.id,
-      full_name: `${resident.first_name} ${resident.middle_name || ''} ${resident.last_name}`.trim(),
+      first_name: resident.first_name || '',
+      last_name: resident.last_name || '',
       birth_date: resident.birth_date || '',
-      address: resident.Household?.address_line || ''
+      address: resident.address || '',
+      household: resident.Household?.household_code || '',
+      occupation: resident.occupation || ''
     });
     setResidentQuery(`${resident.first_name} ${resident.last_name}`);
     setShowResults(false);
@@ -97,13 +118,17 @@ export default function CertificateForm(){
   }
 
   function clearSelection() {
+    const currentIssuedBy = form.issued_by; // Preserve the issued_by value
     setForm({
       resident_id: null,
-      full_name: '',
+      first_name: '',
+      last_name: '',
       birth_date: '',
       address: '',
+      household: '',
+      occupation: '',
       purpose: '',
-      issued_by: ''
+      issued_by: currentIssuedBy // Keep the Barangay Captain name
     });
     setResidentQuery('');
     setSearchResults([]);
@@ -112,7 +137,7 @@ export default function CertificateForm(){
   }
 
   async function issue() {
-    if (!form.full_name || !form.purpose) {
+    if (!form.first_name || !form.last_name || !form.purpose) {
       return alert('Please fill in all required fields');
     }
     
@@ -132,17 +157,91 @@ export default function CertificateForm(){
   }
 
   function handlePDFClick() {
-    if (!form.full_name || !form.purpose) {
+    if (!form.first_name || !form.last_name || !form.purpose) {
       return alert('Please fill in all required fields before generating PDF');
     }
     setShowPDFModal(true);
   }
 
   async function confirmGeneratePDF() {
-    // First save to database
+    let residentId = form.resident_id;
+
+    // If no resident selected (manual entry), check if resident exists or create new one
+    if (!residentId && form.first_name && form.last_name) {
+      try {
+        // Check if resident with same first and last name exists
+        const checkResponse = await api.get('/residents', { 
+          params: { q: `${form.first_name} ${form.last_name}` } 
+        });
+        const existingResidents = checkResponse.data.rows || checkResponse.data;
+        
+        const exactMatch = existingResidents.find(r => 
+          r.first_name.toLowerCase() === form.first_name.toLowerCase() && 
+          r.last_name.toLowerCase() === form.last_name.toLowerCase()
+        );
+
+        if (exactMatch) {
+          // Use existing resident
+          residentId = exactMatch.id;
+        } else {
+          // Create new resident first
+          let householdId = null;
+          
+          // If household code is provided, try to find or create household
+          if (form.household || form.address) {
+            try {
+              // Check if household exists
+              const householdResponse = await api.get('/households');
+              const households = householdResponse.data;
+              
+              let household = null;
+              if (form.household) {
+                household = households.find(h => h.household_code === form.household);
+              }
+              
+              if (!household && (form.household || form.address)) {
+                // Create new household
+                const newHouseholdData = {
+                  household_code: form.household || `HH-${Date.now()}`,
+                  address_line: form.address || 'Not Specified'
+                };
+                const newHousehold = await api.post('/households', newHouseholdData);
+                householdId = newHousehold.data.id;
+              } else if (household) {
+                householdId = household.id;
+              }
+            } catch (err) {
+              console.error('Error handling household:', err);
+            }
+          }
+
+          const newResidentData = {
+            first_name: form.first_name,
+            last_name: form.last_name,
+            birth_date: form.birth_date || null,
+            address: form.address || null,
+            occupation: form.occupation || null,
+            gender: 'Not Specified',
+            civil_status: 'Not Specified',
+            household_id: householdId
+          };
+
+          const residentResponse = await api.post('/residents', newResidentData);
+          residentId = residentResponse.data.id;
+          alert('New resident created and added to the database');
+        }
+      } catch (err) {
+        console.error('Error checking/creating resident:', err);
+        alert('Failed to create resident. Please try again.');
+        setShowPDFModal(false);
+        return;
+      }
+    }
+
+    // Now save certificate to database
     try {
       await api.post('/certificates', { 
-        resident_id: form.resident_id,
+        resident_id: residentId,
         type, 
         issued_by: form.issued_by || 'System',
         purpose: form.purpose
@@ -159,6 +258,8 @@ export default function CertificateForm(){
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+    
+    const fullName = `${form.first_name} ${form.last_name}`.trim();
     
     // Header
     doc.setFontSize(18);
@@ -192,7 +293,7 @@ export default function CertificateForm(){
     // Resident details
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text(form.full_name, pageWidth / 2, yPos, { align: 'center' });
+    doc.text(fullName, pageWidth / 2, yPos, { align: 'center' });
     yPos += 10;
     
     doc.setFontSize(12);
@@ -244,7 +345,7 @@ export default function CertificateForm(){
     doc.text('Not valid without official seal', pageWidth / 2, pageHeight - 15, { align: 'center' });
     
     // Save the PDF
-    const fileName = `${type.replace(/\s+/g, '_')}_${form.full_name.replace(/\s+/g, '_')}.pdf`;
+    const fileName = `${type.replace(/\s+/g, '_')}_${fullName.replace(/\s+/g, '_')}.pdf`;
     doc.save(fileName);
     
     setShowPDFModal(false);
@@ -277,15 +378,8 @@ export default function CertificateForm(){
               className={`px-4 py-2 border rounded-lg flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${searchError ? 'border-red-500 animate-shake' : 'border-gray-300'}`}
               value={residentQuery} 
               onChange={e=>{setResidentQuery(e.target.value); setSearchError('');}}
-              onKeyPress={e => e.key === 'Enter' && searchResident()}
-              placeholder="Type name to search..." 
+              placeholder="Type name to search (auto-suggest)..." 
             />
-            <button 
-              onClick={searchResident} 
-              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Search
-            </button>
             {form.resident_id && (
               <button 
                 onClick={clearSelection} 
@@ -314,7 +408,7 @@ export default function CertificateForm(){
                 >
                   <p className="font-semibold text-gray-900">{res.first_name} {res.last_name}</p>
                   <p className="text-sm text-gray-600">
-                    {res.Household?.address_line || 'No address'} | Born: {res.birth_date || 'N/A'}
+                    {res.address || 'No address'} | Born: {res.birth_date || 'N/A'}
                   </p>
                 </div>
               ))}
@@ -328,15 +422,27 @@ export default function CertificateForm(){
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
               <input
                 className="px-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                value={form.full_name}
-                onChange={e => setForm({...form, full_name: e.target.value})}
-                placeholder="Enter full name"
+                value={form.first_name}
+                onChange={e => setForm({...form, first_name: e.target.value})}
+                placeholder="Enter first name"
               />
             </div>
             
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name *</label>
+              <input
+                className="px-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                value={form.last_name}
+                onChange={e => setForm({...form, last_name: e.target.value})}
+                placeholder="Enter last name"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
               <input
@@ -345,6 +451,22 @@ export default function CertificateForm(){
                 value={form.birth_date}
                 onChange={e => setForm({...form, birth_date: e.target.value})}
               />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Household</label>
+              <select
+                className="px-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                value={form.household}
+                onChange={e => setForm({...form, household: e.target.value})}
+              >
+                <option value="">Select Household</option>
+                {households.map(h => (
+                  <option key={h.id} value={h.household_code}>
+                    {h.household_code}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -355,6 +477,16 @@ export default function CertificateForm(){
               value={form.address}
               onChange={e => setForm({...form, address: e.target.value})}
               placeholder="Enter complete address"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Occupation</label>
+            <input
+              className="px-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              value={form.occupation}
+              onChange={e => setForm({...form, occupation: e.target.value})}
+              placeholder="Enter occupation"
             />
           </div>
 
