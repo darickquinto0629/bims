@@ -12,6 +12,7 @@ A comprehensive full-stack web application for managing barangay (village) admin
 - [Configuration](#configuration)
 - [Running the Application](#running-the-application)
 - [API Documentation](#api-documentation)
+- [Security Documentation](#security-documentation)
 - [Database Schema](#database-schema)
 - [Features Documentation](#features-documentation)
 - [Contributing](#contributing)
@@ -246,6 +247,36 @@ VITE_API_URL=http://localhost:4000/api
    ```
 
 ## 📚 API Documentation
+
+See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference.
+
+## 🔒 Security Documentation
+
+BIMS implements comprehensive security measures including:
+- **JWT Authentication** - Secure token-based authentication
+- **Role-Based Access Control** - Admin and staff role separation
+- **Password Encryption** - Bcrypt hashing for password security
+- **Protected Routes** - Frontend and backend route protection
+- **Activity Logging** - Track all system changes
+
+### User Roles
+- **Admin** - Full system access including user management and administration
+- **Staff** - Access to resident, household, certificate, blotter, and official management
+
+### Default Credentials
+```
+Username: admin
+Password: admin123
+Role: admin
+```
+
+**⚠️ Important:** Change default credentials immediately after first login!
+
+For detailed security information, best practices, and implementation details, see [SECURITY.md](SECURITY.md).
+
+---
+
+## 📚 Complete API Documentation
 
 ### Base URL
 ```

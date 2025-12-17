@@ -60,8 +60,18 @@ export default function App(){
         <Route path="/officials/:id/edit" element={<OfficialForm />} />
 
         <Route path="/reports" element={<Reports />} />
+      </Route>
 
-        <Route path="/admin" element={<Admin />} />
+      {/* Admin-only route */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Admin />} />
       </Route>
 
       {/* Redirect to login */}
